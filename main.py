@@ -2,6 +2,7 @@ import json
 import math
 import random
 import time
+import sys
 
 # Variables Globales
     
@@ -75,6 +76,23 @@ class Estado:
         self.tablero[y].insert(x,id)
         self.knight_aliado_pos[str(id)] = [x,y]
         self.knight_aliado[y].insert(x,id)
+
+    def eliminarKnight_tablero(self,x,y):
+        self.tablero[y][x] = None
+
+    def esEnemigo(self,x,y):
+        if self.knight_enemigo[y][x] !=None:
+            return True
+        return False
+
+    def insertarKinght_tablero_Enemigo(self,x,y,id):
+        if self.tablero[y][x] != None:
+            del self.knight_aliado_pos[str(self.tablero[y][x])]
+            self.knight_aliado[y][x] = None
+            self.tablero[y].pop(x)
+        self.tablero[y].insert(x,id)
+        self.knight_enemigo_pos[str(id)] = [x,y]
+        self.knight_enemigo[y].insert(x,id)
 
     def eliminarKnight_tablero(self,x,y):
         self.tablero[y][x] = None
@@ -220,17 +238,165 @@ def transition(accion,estado):
 
     return nuevo_estado
 
+def isTerminal(estado):
+    if estado.getPos_knight_aliado():
+        return False
+    if estado.getPos_knight_enemigo():
+        return False
+    return True
+
+
+def getActions_Enemigo(estado):
+    lista_acciones = []
+    for i in range(100, 115):
+        knight_pos = estado.getPos_knight_enemigo(str(i))
+        #print(knight_pos)
+        x = knight_pos[0]
+        #print (x)
+        y = knight_pos[1]
+        #print(y)
+        directions = [0, 1, 2, 3, 4, 5, 6, 7]
+        tablero = estado.getTablero()
+        
+        if x+1 < 8 and y+2 < 8:
+            if estado.esAliado(x+1,y+2):
+                directions.remove(0)
+        else:
+            if x+1 >= 8 or y+2 >=8:
+                directions.remove(0)
+        
+        if x+2 < 8 and y+1 < 8:
+            if estado.esAliado(x+2,y+1):
+                directions.remove(1)
+        else:
+            if x+1 >= 8 or y+2 >=8:
+                directions.remove(1)
+            
+        if x+2 < 8 and y-1 >= 0: 
+            if estado.esAliado(x+2,y-1):
+                directions.remove(2)
+        else:
+            if x+2 >= 8 or y-1 < 0:
+                directions.remove(2)
+        
+        if x+1 < 8 and y-2 >= 0:  
+            if estado.esAliado(x+1,y-2):
+                directions.remove(3)
+        else:
+            if x+1 >= 8 or y-2 < 0:
+                directions.remove(3)
+
+        if x-1 >=0 and y-2 >= 0:
+            if estado.esAliado(x-1,y-2):
+                directions.remove(4)
+        else:
+            if x-1 < 0 or y-2 < 0:
+                directions.remove(4)
+
+        if x-2 >=0 and y-1 >= 0:
+            if estado.esAliado(x-2,y-1):
+                directions.remove(5)
+        else:
+            if x-2 < 0 or y-1 < 0:
+                directions.remove(5) 
+
+        if x-2 >=0 and y+1 < 8:
+            if estado.esAliado(x-2,y+1):
+                directions.remove(6)
+        else:
+            if x-2 < 0 or y+1 >= 8:
+                directions.remove(6)
+
+        if x-1 >=0 and y+2 < 8: 
+            if estado.esAliado(x-1,y+2):
+                directions.remove(7)
+        else:
+            if x-1 < 0 or y+2 >= 8:
+                directions.remove(7)
+
+        for direction in directions:
+            accion = Accion()
+            accion.setKnight_id(str(i))
+            accion.setKnight_movement(direction)
+            lista_acciones.append(accion)
+        
+    return lista_acciones
+
+def transitionEnemigo(accion,estado):
+    nuevo_estado = estado
+    knight_pos = estado.getPos_knight_enemigo(str(accion.getKnight_id()))
+    #print(knight_pos)
+    x = knight_pos[0]
+    #print (x)
+    y = knight_pos[1]
+
+    if accion.getKnight_movement() == 0:
+        nuevo_estado.eliminarKnight_tablero(x,y)
+        x = x+1
+        y = y+2
+        nuevo_estado.insertarKinght_tablero(x,y,accion.getKnight_id())
+
+    if accion.getKnight_movement() == 1:
+        nuevo_estado.eliminarKnight_tablero(x,y)
+        x = x+2
+        y = y+1
+        nuevo_estado.insertarKinght_tablero(x,y,accion.getKnight_id())
+
+    if accion.getKnight_movement() == 2:
+        nuevo_estado.eliminarKnight_tablero(x,y)
+        x = x+2
+        y = y-1
+        nuevo_estado.insertarKinght_tablero(x,y,accion.getKnight_id())
+
+
+    if accion.getKnight_movement() == 3:
+        nuevo_estado.eliminarKnight_tablero(x,y)
+        x = x+1
+        y = y-2
+        nuevo_estado.insertarKinght_tablero(x,y,accion.getKnight_id())
+
+
+    if accion.getKnight_movement() == 4:
+        nuevo_estado.eliminarKnight_tablero(x,y)
+        x = x-1
+        y = y-2
+        nuevo_estado.insertarKinght_tablero(x,y,accion.getKnight_id())
+
+
+    if accion.getKnight_movement() == 5:
+        nuevo_estado.eliminarKnight_tablero(x,y)
+        x = x-2
+        y = y-1
+        nuevo_estado.insertarKinght_tablero(x,y,accion.getKnight_id())
+
+
+    if accion.getKnight_movement() == 6:
+        nuevo_estado.eliminarKnight_tablero(x,y)
+        x = x-2
+        y = y+1
+        nuevo_estado.insertarKinght_tablero(x,y,accion.getKnight_id())
+
+
+    if accion.getKnight_movement() == 7:
+        nuevo_estado.eliminarKnight_tablero(x,y)
+        x = x-1
+        y = y+2
+        nuevo_estado.insertarKinght_tablero(x,y,accion.getKnight_id())
+
+    return nuevo_estado
+
 # 
 # Estructuras Para Implementar Arbol  
 # 
 
 class Node:
-    def __init__(self, SInput, PInput, WInput, CInput, Vinput):
-        self.state = Sinput
-        self.parent = PInput
-        self.childs = Cinput
-        self.visits = VInput
-        self.wins = WInput
+    def __init__(self, sInput, pInput, wInput, sInput, vInput, aInput):
+        self.state = sInput
+        self.parent = pInput
+        self.childs = cInput
+        self.visits = vInput
+        self.wins = wInput
+        self.action = aInput
 
     # Gets y Sets
 
@@ -278,7 +444,7 @@ class Node:
     def expandNode(self):
         actions = getActions(self.state)
         for a in actions:
-            child = node(transition(a, parentState), n, 0, [], 0)
+            child = node(transition(a, parentState), n, 0, [], 0, a)
             self.childs.append(child)
 
     def updateWins(self, reward):
@@ -292,7 +458,7 @@ def UCTvalue(Tvisits, nodeWins, nodeVisits):
     else:
         return (nodeWins / nodeVisits) + 1.41*(math.sqrt(math.log(Tvisits)/nodeVisits))
 
-def findeBestNode(Snode):
+def findBestNode(Snode):
     parentVisit = Snode.getVisits()
     childs = Snode.getChilds()
     bestScore =  0
@@ -323,13 +489,13 @@ def treepolicy(node):
             node.expandNode()
             return node
         elif random.uniform(0,1) <.5:
-            node = findeBestNode(node)
+            node = findBestNode(node)
         else:
             if node.isFullExpanded() == False:
                 node.expandNode()
                 return node
             else:
-                node = findeBestNode(node)
+                node = findBestNode(node)
     return node
 
 #
@@ -344,13 +510,13 @@ def deafultPolicy(inputState):
 
 def monteCarloTreeSearch(intialState):
     t_end = time.time() + 4.8
-    rootNode = Node(intialState, None, 0, [], 0)
+    rootNode = Node(intialState, None, 0, [], 0, None)
     while time.time() < t_end:
         vL = treepolicy(rootNode)
         reward = deafultPolicy(vL.state)
 
 
-    return findeBestNode(rootNode)
+    return findBestNode(rootNode)
 
 
 
