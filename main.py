@@ -6,6 +6,7 @@ import sys
 
 
 # Variables Globales
+phi = (1 + 5 ** 0.5) / 2
 #
 
 class Accion:
@@ -511,7 +512,7 @@ def UCTvalue(Tvisits, nodeWins, nodeVisits, nodeTurn):
     if nodeVisits == 0:
         return sys.maxsize
     else:
-        return (nodeTurn * (nodeWins / nodeVisits)) + (1.41 * (math.sqrt(math.log(Tvisits) / nodeVisits)))
+        return (nodeTurn * (nodeWins / nodeVisits)) + (phi * (math.sqrt(math.log(Tvisits) / nodeVisits)))
 
 
 def findBestNode(rootNode):
