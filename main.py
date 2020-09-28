@@ -4,7 +4,6 @@ import random
 import time
 import sys
 
-
 # Variables Globales
 phi = (1 + 5 ** 0.5) / 2
 #
@@ -119,7 +118,7 @@ def getActions(estado):
             knight_pos = estado.getPos_knight_aliado(str(i))
         else:
             continue
-        
+
         # print(knight_pos)
         x = knight_pos[0]
         # print (x)
@@ -174,7 +173,7 @@ def getActions(estado):
             if estado.esAliado(x + 1, y - 2):
                 directions.remove(6)
         else:
-            if x + 1 >= 8 or y -2 < 0:
+            if x + 1 >= 8 or y - 2 < 0:
                 directions.remove(6)
 
         if y - 1 >= 0 and x + 2 < 8:
@@ -206,7 +205,6 @@ def transition(accion, estado):
         x = x + 2
         y = y + 1
         nuevo_estado.insertarKnight_tablero(x, y, accion.getKnight_id())
-     
 
     if accion.getKnight_movement() == 1:
         nuevo_estado.eliminarKnight_tablero(x, y)
@@ -262,12 +260,12 @@ def isTerminal(estado):
 def getActions_Enemigo(estado):
     lista_acciones = []
     for i in range(100, 115):
-        
+
         if estado.getPos_knight_enemigo(str(i)):
             knight_pos = estado.getPos_knight_enemigo(str(i))
         else:
             continue
-        
+
         # print(knight_pos)
         x = knight_pos[0]
         # print (x)
@@ -297,14 +295,12 @@ def getActions_Enemigo(estado):
             if x - 1 < 0 or y + 2 >= 8:
                 directions.remove(2)
 
-
         if y + 1 < 8 and x - 2 >= 0:
             if estado.esEnemigo(y + 1, x - 2):
                 directions.remove(3)
         else:
             if x - 2 < 0 or y + 1 >= 8:
                 directions.remove(3)
-
 
         if y - 1 >= 0 and x - 2 >= 0:
             if estado.esEnemigo(y - 1, x - 2):
@@ -313,7 +309,6 @@ def getActions_Enemigo(estado):
             if y - 1 < 0 or x - 2 < 0:
                 directions.remove(4)
 
-
         if y - 2 >= 0 and x - 1 >= 0:
             if estado.esEnemigo(y - 2, x - 1):
                 directions.remove(5)
@@ -321,14 +316,12 @@ def getActions_Enemigo(estado):
             if x - 1 < 0 or y - 2 < 0:
                 directions.remove(5)
 
-
         if y - 2 >= 0 and x + 1 < 8:
             if estado.esEnemigo(y - 2, x + 1):
                 directions.remove(6)
         else:
-            if x + 1 >= 8 or y -2 < 0:
+            if x + 1 >= 8 or y - 2 < 0:
                 directions.remove(6)
-
 
         if y - 1 >= 0 and x + 2 < 8:
             if estado.esEnemigo(y - 1, x + 2):
@@ -336,7 +329,6 @@ def getActions_Enemigo(estado):
         else:
             if y - 1 < 0 or x + 2 >= 8:
                 directions.remove(7)
-
 
         for direction in directions:
             accion = Accion()
@@ -474,10 +466,10 @@ class Node:
         self.turn = TInput
 
     def setUct(self, UInput):
-        self.utcValue = UInput
+        self.uctValue = UInput
 
     def getUct(self):
-        return self.utcValue
+        return self.uctValue
 
     #
     # Funciones Clase
@@ -485,14 +477,20 @@ class Node:
 
     def isFullExpanded(self):
         # Determina si el nodo esta completamente Expandido
-        if ((len(self.childs) == (len(getActions(self.state))))):
-            return True
+        if self.turn == 1:
+            if len(self.childs) == (len(getActions(self.state))):
+                return True
+            else:
+                return False
         else:
-            return False
+            if len(self.childs) == (len(getActions_Enemigo(self.state))):
+                return True
+            else:
+                return False
 
     def ifActionIsInChilds(self, action):
         for c in self.childs:
-            if (c.action == action):
+            if c.action == action:
                 return True
         return False
 
@@ -535,7 +533,6 @@ def findBestNode(rootNode):
 
 
 def defaultPolicy(state, flag):
-    
     while isTerminal(state) is False:
         if flag == 1:
             if not getActions(state) == []:
@@ -545,7 +542,7 @@ def defaultPolicy(state, flag):
             state = transition(a, state)
             flag = 0
         else:
-            if getActions(state) == []:
+            if getActions_Enemigo(state) == []:
                 print("acciones vacia")
                 break
             a = random.choice(getActions_Enemigo(state))
@@ -558,10 +555,12 @@ def defaultPolicy(state, flag):
 def monteCarloTreeSearch(intialState, turn):
     t_end = time.time() + 4.8
     rootNode = Node(intialState, None, 0, [], 0, None, turn, 0)
-    while time.time() < t_end:
-        node, simulations = selectNode(rootNode)
+    simulations = 0
+    while True:
+        node = selectNode(rootNode)
         child = expandNode(node)
         outcome = defaultPolicy(child.getState(), child.turn)
+        simulations += 1
         updateNodes(outcome, child, simulations)
 
     return findBestNode(rootNode)
@@ -599,7 +598,6 @@ def getTree(rootNode):
 
 def selectNode(rootNode):
     nodos = getTree(rootNode)
-    visits = 0
     higher = 0
     bestnode = rootNode
     first = True
@@ -610,9 +608,8 @@ def selectNode(rootNode):
         if nodo.getUct() > higher:
             higher = nodo.getUct()
             bestnode = nodo
-        visits += nodo.getVisits()
 
-    return bestnode, visits
+    return bestnode
 
 
 def expandNode(node):
@@ -630,7 +627,7 @@ def expandNodeFull(node):
 def updateNodes(outcome, child, simulations):
     while child.getParent() is not None:
         child.updateWins(outcome)
-        child.setUct = UCTvalue(simulations, child.getWins(), child.getVisits(), child.turn)
+        child.setUct(UCTvalue(simulations, child.getWins(), child.getVisits(), child.turn))
         child = child.parent
 
 
