@@ -6,7 +6,6 @@ import sys
 
 
 # Variables Globales
-
 #
 
 class Accion:
