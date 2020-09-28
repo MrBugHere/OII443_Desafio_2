@@ -444,7 +444,7 @@ class Node:
     def expandNode(self):
         actions = getActions(self.state)
         for a in actions:
-            child = node(transition(a, parentState), n, 0, [], 0, a)
+            child = node(transition(a, self.state), self, 0, [], 0, a)
             self.childs.append(child)
 
     def updateWins(self, reward):
