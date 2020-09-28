@@ -81,21 +81,21 @@ class Estado:
 
     def insertarKnight_tablero(self, x, y, id):
         if self.tablero[x][y] is not None:
-            del self.knight_enemigo_pos[str(self.tablero[x][y])]
+            self.knight_enemigo_pos[str(self.tablero[x][y])] = None
             self.knight_enemigo[x][y] = None
             self.tablero[x].pop(y)
         self.tablero[x].insert(y, id)
         self.knight_aliado_pos[str(id)] = [y, x]
         self.knight_aliado[x].insert(y, id)
 
-    def esEnemigo(self, y, x):
+    def esEnemigo(self, x, y):
         if self.knight_enemigo[x][y] is not None:
             return True
         return False
 
     def insertarKnight_tablero_Enemigo(self, x, y, id):
         if self.tablero[x][y] is not None:
-            del self.knight_aliado_pos[str(self.tablero[x][y])]
+            self.knight_aliado_pos[str(self.tablero[x][y])] = None
             self.knight_aliado[x][y] = None
             self.tablero[x].pop(y)
         self.tablero[y].insert(x, id)
@@ -115,7 +115,11 @@ class Estado:
 def getActions(estado):
     lista_acciones = []
     for i in range(200, 216):
-        knight_pos = estado.getPos_knight_aliado(i)
+        if estado.getPos_knight_aliado(str(i)):
+            knight_pos = estado.getPos_knight_aliado(str(i))
+        else:
+            continue
+        
         # print(knight_pos)
         x = knight_pos[0]
         # print (x)
@@ -202,7 +206,7 @@ def transition(accion, estado):
         x = x + 2
         y = y + 1
         nuevo_estado.insertarKnight_tablero(x, y, accion.getKnight_id())
-        print("hola")
+     
 
     if accion.getKnight_movement() == 1:
         nuevo_estado.eliminarKnight_tablero(x, y)
@@ -258,7 +262,12 @@ def isTerminal(estado):
 def getActions_Enemigo(estado):
     lista_acciones = []
     for i in range(100, 115):
-        knight_pos = estado.getPos_knight_enemigo(i)
+        
+        if estado.getPos_knight_enemigo(str(i)):
+            knight_pos = estado.getPos_knight_enemigo(str(i))
+        else:
+            continue
+        
         # print(knight_pos)
         x = knight_pos[0]
         # print (x)
@@ -334,7 +343,7 @@ def getActions_Enemigo(estado):
             accion.setKnight_id(i)
             accion.setKnight_movement(direction)
             lista_acciones.append(accion)
-
+    print(lista_acciones)
     return lista_acciones
 
 
@@ -526,12 +535,19 @@ def findBestNode(rootNode):
 
 
 def defaultPolicy(state, flag):
+    
     while isTerminal(state) is False:
         if flag == 1:
+            if not getActions(state) == []:
+                print("acciones vacia")
+                break
             a = random.choice(getActions(state))
             state = transition(a, state)
             flag = 0
         else:
+            if getActions(state) == []:
+                print("acciones vacia")
+                break
             a = random.choice(getActions_Enemigo(state))
             state = transitionEnemigo(a, state)
             flag = 1
