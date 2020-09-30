@@ -3,6 +3,8 @@ import math
 import random
 import time
 import sys
+import numpy as np
+from copy import deepcopy
 
 # Variables Globales
 phi = (1 + 5 ** 0.5) / 2
@@ -43,8 +45,7 @@ class Estado:
         return tablero
 
     def printTablero(self):
-        for line in self.tablero:
-            print('\t'.join(map(str, line)))
+        print(np.matrix(self.tablero))
 
     def printAliado(self):
         print(self.knight_aliado)
@@ -82,33 +83,51 @@ class Estado:
         if self.tablero[x][y] is not None:
             self.knight_enemigo_pos[str(self.tablero[x][y])] = None
             self.knight_enemigo[x][y] = None
-            self.tablero[x].pop(y)
-        self.tablero[x].insert(y, id)
-        self.knight_aliado_pos[str(id)] = [y, x]
-        self.knight_aliado[x].insert(y, id)
+            self.tablero[x][y] = None
+            print("pieza enemiga comida")
+        self.tablero[x][y] = id
+        self.knight_aliado_pos[str(id)] = [x, y]
+        self.knight_aliado[x][y] = id
 
-    def esEnemigo(self, x, y):
+    def esEnemigo(self, y, x):
         if self.knight_enemigo[x][y] is not None:
             return True
         return False
 
-    def insertarKnight_tablero_Enemigo(self, x, y, id):
+    def insertarKnight_tablero_enemigo(self, x, y, id):
         if self.tablero[x][y] is not None:
             self.knight_aliado_pos[str(self.tablero[x][y])] = None
             self.knight_aliado[x][y] = None
-            self.tablero[x].pop(y)
-        self.tablero[y].insert(x, id)
+            self.tablero[x][y] = None
+            print("pieza comida")
+        self.tablero[x][y] = id
         self.knight_enemigo_pos[str(id)] = [x, y]
-        self.knight_enemigo[x].insert(y, id)
+        self.knight_enemigo[x][y] = id
 
     def eliminarKnight_tablero(self, x, y):
         self.tablero[x][y] = None
+        self.knight_aliado[x][y] = None
+        
+    def eliminarKnight_tablero_enemigo(self, x, y):
+        self.tablero[x][y] = None
+        self.knight_enemigo[x][y] = None
 
     def whoWon(self):
-        if len(self.knight_aliado_pos) - len(self.knight_enemigo_pos) > 0:
+        empty = [[None, None, None, None, None, None, None, None],
+                 [None, None, None, None, None, None, None, None],
+                 [None, None, None, None, None, None, None, None],
+                 [None, None, None, None, None, None, None, None],
+                 [None, None, None, None, None, None, None, None],
+                 [None, None, None, None, None, None, None, None],
+                 [None, None, None, None, None, None, None, None],
+                 [None, None, None, None, None, None, None, None]]
+
+        if self.knight_aliado == empty:
+            return 0
+        elif self.knight_enemigo == empty:
             return 1
         else:
-            return 0
+            return -1
 
 
 def getActions(estado):
@@ -251,15 +270,9 @@ def transition(accion, estado):
     return nuevo_estado
 
 
-def isTerminal(estado):
-    if (len(estado.knight_enemigo_pos) == 0) or (len(estado.knight_aliado_pos) == 0):
-        return True
-    return False
-
-
 def getActions_Enemigo(estado):
     lista_acciones = []
-    for i in range(100, 115):
+    for i in range(100, 116):
 
         if estado.getPos_knight_enemigo(str(i)):
             knight_pos = estado.getPos_knight_enemigo(str(i))
@@ -335,7 +348,7 @@ def getActions_Enemigo(estado):
             accion.setKnight_id(i)
             accion.setKnight_movement(direction)
             lista_acciones.append(accion)
-    print(lista_acciones)
+    #print(lista_acciones)
     return lista_acciones
 
 
@@ -348,52 +361,52 @@ def transitionEnemigo(accion, estado):
     y = knight_pos[1]
 
     if accion.getKnight_movement() == 0:
-        nuevo_estado.eliminarKnight_tablero(x, y)
+        nuevo_estado.eliminarKnight_tablero_enemigo(x, y)
         x = x + 2
         y = y + 1
-        nuevo_estado.insertarKnight_tablero(x, y, accion.getKnight_id())
+        nuevo_estado.insertarKnight_tablero_enemigo(x, y, accion.getKnight_id())
 
     if accion.getKnight_movement() == 1:
-        nuevo_estado.eliminarKnight_tablero(x, y)
+        nuevo_estado.eliminarKnight_tablero_enemigo(x, y)
         x = x + 1
         y = y + 2
-        nuevo_estado.insertarKnight_tablero(x, y, accion.getKnight_id())
+        nuevo_estado.insertarKnight_tablero_enemigo(x, y, accion.getKnight_id())
 
     if accion.getKnight_movement() == 2:
-        nuevo_estado.eliminarKnight_tablero(x, y)
+        nuevo_estado.eliminarKnight_tablero_enemigo(x, y)
         x = x - 1
         y = y + 2
-        nuevo_estado.insertarKnight_tablero(x, y, accion.getKnight_id())
+        nuevo_estado.insertarKnight_tablero_enemigo(x, y, accion.getKnight_id())
 
     if accion.getKnight_movement() == 3:
-        nuevo_estado.eliminarKnight_tablero(x, y)
+        nuevo_estado.eliminarKnight_tablero_enemigo(x, y)
         x = x - 2
         y = y + 1
-        nuevo_estado.insertarKnight_tablero(x, y, accion.getKnight_id())
+        nuevo_estado.insertarKnight_tablero_enemigo(x, y, accion.getKnight_id())
 
     if accion.getKnight_movement() == 4:
-        nuevo_estado.eliminarKnight_tablero(x, y)
+        nuevo_estado.eliminarKnight_tablero_enemigo(x, y)
         x = x - 2
         y = y - 1
-        nuevo_estado.insertarKnight_tablero(x, y, accion.getKnight_id())
+        nuevo_estado.insertarKnight_tablero_enemigo(x, y, accion.getKnight_id())
 
     if accion.getKnight_movement() == 5:
-        nuevo_estado.eliminarKnight_tablero(x, y)
+        nuevo_estado.eliminarKnight_tablero_enemigo(x, y)
         x = x - 1
         y = y - 2
-        nuevo_estado.insertarKnight_tablero(x, y, accion.getKnight_id())
+        nuevo_estado.insertarKnight_tablero_enemigo(x, y, accion.getKnight_id())
 
     if accion.getKnight_movement() == 6:
-        nuevo_estado.eliminarKnight_tablero(x, y)
+        nuevo_estado.eliminarKnight_tablero_enemigo(x, y)
         x = x + 1
         y = y - 2
-        nuevo_estado.insertarKnight_tablero(x, y, accion.getKnight_id())
+        nuevo_estado.insertarKnight_tablero_enemigo(x, y, accion.getKnight_id())
 
     if accion.getKnight_movement() == 7:
-        nuevo_estado.eliminarKnight_tablero(x, y)
+        nuevo_estado.eliminarKnight_tablero_enemigo(x, y)
         x = x + 2
         y = y - 1
-        nuevo_estado.insertarKnight_tablero(x, y, accion.getKnight_id())
+        nuevo_estado.insertarKnight_tablero_enemigo(x, y, accion.getKnight_id())
 
     return nuevo_estado
 
@@ -533,30 +546,43 @@ def findBestNode(rootNode):
 
 
 def defaultPolicy(state, flag):
-    while isTerminal(state) is False:
+    temp = deepcopy(state)
+    while temp.whoWon() == -1:
         if flag == 1:
-            if not getActions(state) == []:
+            if not getActions(temp):
                 print("acciones vacia")
                 break
-            a = random.choice(getActions(state))
-            state = transition(a, state)
+            a = random.choice(getActions(temp))
+            #print(a)
+            temp = transition(a, temp)
             flag = 0
         else:
-            if getActions_Enemigo(state) == []:
+            if not getActions_Enemigo(temp):
                 print("acciones vacia")
                 break
-            a = random.choice(getActions_Enemigo(state))
-            state = transitionEnemigo(a, state)
+            a = random.choice(getActions_Enemigo(temp))
+            #print(a)
+            temp = transitionEnemigo(a, temp)
             flag = 1
 
-    return state.whoWon()
+    #print("who won:")
+    #print(temp.whoWon())
+    #state.printTablero()
+    #print()
+    #()
+    #print()
+    #temp.printTablero()
+    #print()
+    #print()
+    #print()
+    return temp.whoWon()
 
 
 def monteCarloTreeSearch(intialState, turn):
     t_end = time.time() + 4.8
     rootNode = Node(intialState, None, 0, [], 0, None, turn, 0)
     simulations = 0
-    while True:
+    while time.time() < t_end:
         node = selectNode(rootNode)
         child = expandNode(node)
         outcome = defaultPolicy(child.getState(), child.turn)
@@ -628,10 +654,11 @@ def updateNodes(outcome, child, simulations):
     while child.getParent() is not None:
         child.updateWins(outcome)
         child.setUct(UCTvalue(simulations, child.getWins(), child.getVisits(), child.turn))
-        child = child.parent
+        child = child.getParent()
 
 
 def main():
+    runtime = time.time()
     with open('tablero.json') as f:
         datos = json.load(f)
         print(datos)
@@ -640,16 +667,28 @@ def main():
             tablero = Estado([*zip(*dato['ids'])], [*zip(*dato['enemy_knights'])], [*zip(*dato['my_knights'])],
                              dato['enemy_knights_dict'],
                              dato['my_knights_dict'])
+    with open('primerturno.json') as f:
+        datos = json.load(f)
+        print(datos)
+        for dato in datos:
+            # print(dato['ids'])
+            primerturno = Estado([*zip(*dato['ids'])], [*zip(*dato['enemy_knights'])], [*zip(*dato['my_knights'])],
+                             dato['enemy_knights_dict'],
+                             dato['my_knights_dict'])
 
+    test = getActions(tablero)
+    print(test)
+    testalt = getActions_Enemigo(tablero)
+    print(testalt)
     tablero.printTablero()
-    print(tablero.tablero[0][1])
-    print(tablero.knight_enemigo_pos[str(102)])
-
+    #if primerturno == tablero:
     jugada = monteCarloTreeSearch(tablero, 1)
+    #else:
+    #    jugada = monteCarloTreeSearch(tablero, -1)
+
     jugada.getState().printTablero()
-
-    tablero.printTablero()
-
+    endtime = time.time() - runtime
+    print(endtime)
 
 if __name__ == "__main__":
     main()
